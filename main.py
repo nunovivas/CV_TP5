@@ -2,17 +2,19 @@ import cv2
 import os
 import time
 import functions as f
+import random
 
 def main():
     # Set the path to the directory containing your image files
     directory_path = './images/'
-
+    last_reset_time=0
+    frame_index=0
+    
     # Get a list of all files in the directory
     file_list = sorted(file for file in os.listdir(directory_path) if not file.startswith('.'))
 
     # Create an empty list to store frames
     framesWithBasketball = []
-    fps=0
 
     # Read all images and store them in the frames list
     for file_name in file_list:
@@ -27,26 +29,25 @@ def main():
     mainFrameWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     mainFrameHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    # Define the size and position of the box in the middle of the camera frame
-    box_size = (50, 50)
-    box_x = (mainFrameWidth - box_size[0]) // 2
-    box_y = (mainFrameHeight - box_size[1]) // 2
-    bbox = (box_x,box_y,box_size[0], box_size[1])
+    box_size = (50,50)
+    # Generate random starting points for the bounding box
+    bbox = f.shuffleBox(mainFrameWidth,mainFrameHeight,box_size)
+    print (bbox)
     # Initialize variables for frame rate calculation
-    start_time = time.time()
-    frame_count = 0
 
     while True:
         # Read a frame from the camera
         ret, frame = cap.read()
+        t_start = cv2.getTickCount()
+
         if not ret:
             break  # Break the loop if reading the frame fails
 
-    # Get the elapsed time in seconds
-        elapsed_time = time.time() - start_time
 
         # Display the corresponding image from the list inside the box
-        frame_index = int(elapsed_time * 30)  # Assuming 30 frames per second
+        fpsCalculations = f.drawFps(t_start,frame,frame_index,last_reset_time) # must return the frame index
+        frame_index=fpsCalculations[0]
+        last_reset_time=fpsCalculations[1]
         if frame_index < len(framesWithBasketball):
             img_to_display = framesWithBasketball[frame_index]
 
@@ -54,26 +55,18 @@ def main():
             img_to_display = cv2.resize(img_to_display, (box_size[0], box_size[1]))
 
             # Insert the image into the camera frame
-            #frame[box_y:box_y + box_size[1], box_x:box_x + box_size[0]] = img_to_display
             f.doMask(frame,bbox,img_to_display)
     
-        # Display the dynamically calculated frame rate in the top-left corner
-        frame_count += 1
-        elapsed_time = time.time() - start_time
-        if elapsed_time > 1.0:  # Update frame rate every second
-            fps = frame_count / elapsed_time
-            frame_count = 0
-            start_time = time.time()
-
-        cv2.putText(frame, f'FPS: {fps:.2f}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-
+        # Display the updated frame with the image
+        cv2.imshow('Frame with Image', frame)
         # Exit the loop when the 'q' key is pressed or when all images are displayed
         if cv2.waitKey(1) & 0xFF == ord('q') :
             break
-        # Display the updated frame with the image
-        cv2.imshow('Frame with Image', frame)
-
-
+        if cv2.waitKey(1) & 0xFF == ord('w') :
+            #shuffle the box position
+            bbox = f.shuffleBox(mainFrameWidth,mainFrameHeight,box_size)
+            print()
+            
     # Release the video capture and close all windows
     cap.release()
     cv2.destroyAllWindows()
