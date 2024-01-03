@@ -3,6 +3,8 @@ import os
 import time
 import functions as f
 import random
+import mediapipe as mp
+
 
 def main():
     # Set the path to the directory containing your image files
@@ -22,6 +24,10 @@ def main():
         frame = cv2.imread(file_path,cv2.IMREAD_UNCHANGED) # guarantees it has the original alpha channel
         framesWithBasketball.append(frame)
 
+  # Initialize MediaPipe Hands
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands()
+
     # Open the video capture
     cap = cv2.VideoCapture(1)  # Use 0 for the default camera, change if needed
 
@@ -29,7 +35,7 @@ def main():
     mainFrameWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     mainFrameHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    box_size = (50,50)
+    box_size = (100,100)
     # Generate random starting points for the bounding box
     bbox = f.shuffleBox(mainFrameWidth,mainFrameHeight,box_size)
     print (bbox)
@@ -43,7 +49,45 @@ def main():
         if not ret:
             break  # Break the loop if reading the frame fails
 
+        
+        #MEDIAPIPE
+        # Convert the BGR image to RGB
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+        # Process the image with MediaPipe Holistic
+        results = hands.process(rgb_frame)
+
+     # Check if hand landmarks are detected
+        if results.multi_hand_landmarks:
+            # Extract landmarks for the first detected hand
+            hand_landmarks = results.multi_hand_landmarks[0]
+            thumb_tip = hand_landmarks.landmark[4]  # Thumb tip
+            index_tip = hand_landmarks.landmark[8]  # Index finger tip
+
+            # Calculate the distance between the thumb and index finger
+            distance = ((thumb_tip.x - index_tip.x)**2 + (thumb_tip.y - index_tip.y)**2)**0.5
+
+            # Define a threshold for pinch detection
+            pinch_threshold = 0.02
+            # Get the coordinates of thumb and index finger tips
+            thumb_coordinates = (int(thumb_tip.x * frame.shape[1]), int(thumb_tip.y * frame.shape[0]))
+            index_coordinates = (int(index_tip.x * frame.shape[1]), int(index_tip.y * frame.shape[0]))
+
+            # Check if the distance is below the threshold to detect a pinch
+            if distance < pinch_threshold:
+                #Draw "Pinch Detected" in the far right corner
+                if (f.isPinchInsideBox(thumb_coordinates,index_coordinates,bbox)):
+                # Draw "Pinch Detected" in the far right corner
+                    print ("PINCH INSIDE BOX")
+                    cv2.putText(frame, "Pinch Detected Inside Box", (frame.shape[1] - 300, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                else:
+                    cv2.putText(frame, "Pinch Detected", (frame.shape[1] - 200, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                    # Draw coordinates on the frame
+                    cv2.putText(frame, f"Thumb: {thumb_coordinates}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+                    cv2.putText(frame, f"Index: {index_coordinates}", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+              
+
+        #BASKETBALL
         # Display the corresponding image from the list inside the box
         fpsCalculations = f.drawFps(t_start,frame,frame_index,last_reset_time) # must return the frame index
         frame_index=fpsCalculations[0]
