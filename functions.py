@@ -39,8 +39,10 @@ def doMask(frame, box, newImage):
 
         # Update the frame with the blended result
         frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]] = roi
+        return True
     else:
         print("Invalid box size")
+        return False
 
 
 def has_alpha_opencv(img):
@@ -104,5 +106,35 @@ def isPinchInsideBox(thumb_coordinates, index_coordinates, box, threshold=100):
         print(f"An error occurred: {e}")
         return False
    
+def displayScore(frame, score, difficulty):
+    # Get the frame dimensions
+    frame_height, frame_width, _ = frame.shape
 
+    # Define the font and position for the text
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1
+    font_thickness = 2
+    text = f"Difficulty: {difficulty}/Score: {score}"
+    text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+    text_position = (frame_width - text_size[0] - 10, frame_height - 10)
+
+    # Put the text on the frame
+    cv2.putText(frame, text, text_position, font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
+
+    return frame
+def changeBoxSize(difficulty) :
+    match difficulty:
+        case 'Easy':
+            box_size = (175,175)
+        case 'Medium':
+            box_size = (150,150)
+        case 'Hard':
+            box_size = (125,125)
+        case 'God':
+            box_size = (100,100)
+        case _:
+            box_size = (175,175)
+    return box_size
+
+        
   
