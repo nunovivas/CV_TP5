@@ -1,4 +1,3 @@
-import math
 import random
 import cv2 as cv2
 from statistics import mean as mean
@@ -80,21 +79,30 @@ def shuffleBox(mainFrameWidth,mainFrameHeight,box_size):
     box_y = random.randint(0, mainFrameHeight - box_size[1])
     bbox = (box_x,box_y,box_size[0], box_size[1])
     return bbox
-def isPinchInsideBox(thumb_coordinates, index_coordinates, box, threshold=5000):
+def isPinchInsideBox(thumb_coordinates, index_coordinates, box, threshold=100):
     thumb_x, thumb_y = thumb_coordinates
     index_x, index_y = index_coordinates
 
-    box_x_min, box_y_min, box_x_max, box_y_max = box
+    box_x, box_y, box_width, box_height = box
 
     # Calculate the center of the box
-    box_center_x = (box_x_min + box_x_max) / 2
-    box_center_y = (box_y_min + box_y_max) / 2
+    box_center_x = box_x + box_width / 2
+    box_center_y = box_y + box_height / 2
 
-    # Calculate the distance between the pinch center and the box center
-    distance = math.sqrt((thumb_x + index_x) / 2 - box_center_x)**2 + ((thumb_y + index_y) / 2 - box_center_y)**2
-    print (F"thumbCoord:{thumb_coordinates}-indexCoord{index_coordinates} - box Coord{box} distance {distance}")
-
-    # Check if the distance is within the threshold
-    return distance < threshold
+    print (F"thumbCoord:{thumb_coordinates}-indexCoord{index_coordinates} - box Coord{box}")
+    print (F"Box Center X {box_center_x} and Center Y{box_center_y}")
+      
+    # Needs to be in a try catch so it doesnt blow up if out of bounds
+    try:
+        # Calculate the distance between the index finger and the box center
+        distance_to_center = ((index_x - box_center_x)**2 + (index_y - box_center_y)**2)**0.5
+        # Check if the distance is within the threshold
+        print(F"Distance {distance_to_center}")
+        return distance_to_center < threshold
+    except Exception as e:
+        # Catch any other exceptions
+        print(f"An error occurred: {e}")
+        return False
+   
 
   

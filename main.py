@@ -66,13 +66,13 @@ def main():
 
             # Calculate the distance between the thumb and index finger
             distance = ((thumb_tip.x - index_tip.x)**2 + (thumb_tip.y - index_tip.y)**2)**0.5
-
+           
             # Define a threshold for pinch detection
             pinch_threshold = 0.02
             # Get the coordinates of thumb and index finger tips
             thumb_coordinates = (int(thumb_tip.x * frame.shape[1]), int(thumb_tip.y * frame.shape[0]))
             index_coordinates = (int(index_tip.x * frame.shape[1]), int(index_tip.y * frame.shape[0]))
-
+           
             # Check if the distance is below the threshold to detect a pinch
             if distance < pinch_threshold:
                 #Draw "Pinch Detected" in the far right corner
