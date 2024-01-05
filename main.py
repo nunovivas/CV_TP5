@@ -18,7 +18,11 @@ def main():
     difficulty = difficulty_handler.get_current_difficulty()
     pinchInside=False
     durationOfPinch=1
-    
+    #swipe variables
+    left_swipe_counter = 0
+    right_swipe_counter = 0
+    swipe_threshold = 10 # this is actually the number of processed frames. Might need to be bigger
+    last_index_x = None
     # Define a threshold for pinch detection
     pinch_threshold = 0.02
     # Box size width and heigth
@@ -36,7 +40,7 @@ def main():
         frame = cv2.imread(file_path,cv2.IMREAD_UNCHANGED) # guarantees it has the original alpha channel
         framesWithBasketball.append(frame)
 
-  # Initialize MediaPipe Hands
+    # Initialize MediaPipe Hands
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands()
 
@@ -74,7 +78,7 @@ def main():
         # Convert the BGR image to RGB
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # Process the image with MediaPipe Holistic
+        # Process the image with MediaPipe Hands
         results = hands.process(rgb_frame)
 
         # Check if hand landmarks are detected
@@ -106,6 +110,33 @@ def main():
             #Just move the ball if there is an index
             if index_coordinates and pinchInside:
                 bbox = *index_coordinates, *box_size
+                
+            #CHANGE LEVEL USING SWIPES
+            # Check if this is not the first frame
+            if last_index_x is not None:
+                if index_tip.x < last_index_x:
+                    left_swipe_counter += 1
+                    right_swipe_counter = 0
+                elif index_tip.x > last_index_x:
+                    right_swipe_counter += 1
+                    left_swipe_counter = 0
+
+                # Check for a left swipe
+                if left_swipe_counter >= swipe_threshold:
+                    print("Swipe Left detected! Looping Difficulty")
+                    difficulty = difficulty_handler.loop_difficulty()
+                    left_swipe_counter = 0  # Reset the counter after detecting a left swipe
+
+                # Check for a right swipe
+                if right_swipe_counter >= swipe_threshold:
+                    print("Swipe Right detected! Looping Difficulty")
+                    difficulty = difficulty_handler.loop_difficulty()
+                    right_swipe_counter = 0  # Reset the counter after detecting a right swipe
+
+
+            # Update the last known index finger position
+            last_index_x = index_tip.x
+
 
         #BASKETBALL
         # Display the corresponding image from the list inside the box
@@ -125,6 +156,9 @@ def main():
                 #reshuffle the basketball
                 bbox = f.shuffleBox(mainFrameWidth,mainFrameHeight,box_size)
         #END FRAME PROCESSING
+        #Check for Swipes
+        lastKnownLeftHandPos = f.get_right_hand_coordinates
+        lastKnownRightHandPos = 0
         #Display current Score and Difficulty
         f.displayScore(frame,score,difficulty)
         # Display the updated frame with the image

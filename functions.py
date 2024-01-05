@@ -51,7 +51,7 @@ def has_alpha_opencv(img):
 
 def drawFps(t_start, frame,frame_index,last_reset_time):
     t_end = cv2.getTickCount()
-    fps = cv2.getTickFrequency() / (t_end - t_start) / 1000
+    fps = cv2.getTickFrequency() / (t_end - t_start)
     #print (F"T_end {t_end} T_start{t_start} and one minus the other{t_end-t_start}")
     fps_list.append(fps)
     if len(fps_list) > 10:
@@ -136,5 +136,10 @@ def changeBoxSize(difficulty) :
             box_size = (175,175)
     return box_size
 
-        
+def get_right_hand_coordinates(hand_landmarks):
+    # Extract x and y coordinates of the right hand landmarks
+    right_hand_x = [hand_landmarks.landmark[i].x for i in range(9, 17)]
+    right_hand_y = [hand_landmarks.landmark[i].y for i in range(9, 17)]
+
+    return right_hand_x, right_hand_y      
   

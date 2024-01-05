@@ -6,7 +6,7 @@ DONE -> Release
 Spawn do cesto, após x segundos e depois de ponto ou falha
 Encestar – Sobreposição de elementos gráficos ou texto
 DONE -> Display Score Permanente
-Swipe Left/Right (aumenta diminui o diametro do cesto)
+ITS SHIT. Needs to be a gesture....DONE -> Swipe Left/Right (aumenta diminui o diametro do cesto)
 Jogo entra em pausa
 Confetis (ou outra animação) Quando encesta
 Pausa
