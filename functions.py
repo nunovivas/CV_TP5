@@ -2,10 +2,15 @@ import random
 import cv2 as cv2
 from statistics import mean as mean
 import time
+import math
 
 
 # Store fps values for calculating mean
 fps_list = []
+
+def euclidean_distance(point1, point2):
+    return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+
 
 def doMask(frame, box, newImage):
     # Resize the image to fit the bounding box
@@ -81,26 +86,53 @@ def shuffleBox(mainFrameWidth,mainFrameHeight,box_size):
     box_y = random.randint(0, mainFrameHeight - box_size[1])
     bbox = (box_x,box_y,box_size[0], box_size[1])
     return bbox
-def isPinchInsideBox(thumb_coordinates, index_coordinates, box, threshold=100):
-    thumb_x, thumb_y = thumb_coordinates
-    index_x, index_y = index_coordinates
+
+def isPinch (thumb_coordinates,index_coordinates,middle_coordinates,ring_coordinates,threshold=100):
+     # Calculate distances between finger points
+    thumb_index_distance = euclidean_distance(thumb_coordinates, index_coordinates)
+    thumb_middle_distance = euclidean_distance(thumb_coordinates, middle_coordinates)
+    thumb_ring_distance = euclidean_distance(thumb_coordinates, ring_coordinates)
+    
+    # Calculate the average distance between fingers
+    average_distance = (thumb_index_distance + thumb_middle_distance + thumb_ring_distance) / 3
+  
+    print (F"Index distance:{thumb_index_distance}/middle distance:{thumb_middle_distance}/ring distance:{thumb_ring_distance}")
+    print (F"Average Distance:{average_distance}")
+    
+    if average_distance<threshold : return True
+    else : return False
+
+def isPinchInsideBox( box,thumb_coordinates, index_coordinates, middle_coordinates,ring_coordinates, threshold=100):
 
     box_x, box_y, box_width, box_height = box
 
+    #
+    # Calculate distances between finger points
+    thumb_index_distance = euclidean_distance(thumb_coordinates, index_coordinates)
+    thumb_middle_distance = euclidean_distance(thumb_coordinates, middle_coordinates)
+    thumb_ring_distance = euclidean_distance(thumb_coordinates, ring_coordinates)
+   
     # Calculate the center of the box
     box_center_x = box_x + box_width / 2
     box_center_y = box_y + box_height / 2
 
-    print (F"thumbCoord:{thumb_coordinates}-indexCoord{index_coordinates} - box Coord{box}")
-    print (F"Box Center X {box_center_x} and Center Y{box_center_y}")
+    # print (F"thumbCoord:{thumb_coordinates}-indexCoord{index_coordinates} - box Coord{box}")
+    # print (F"Box Center X {box_center_x} and Center Y{box_center_y}")
       
     # Needs to be in a try catch so it doesnt blow up if out of bounds
     try:
+        # First calculate the distance between all the fingers and the thumb
+        # then use the smallest one has reference, or the average
+        
         # Calculate the distance between the index finger and the box center
-        distance_to_center = ((index_x - box_center_x)**2 + (index_y - box_center_y)**2)**0.5
+        index_distance_to_center = ((index_coordinates[0] - box_center_x)**2 + (index_coordinates[1] - box_center_y)**2)**0.5
+        middle_distance_to_center = ((middle_coordinates[0] - box_center_x)**2 + (middle_coordinates[1] - box_center_y)**2)**0.5
+        ring_distance_to_center = ((ring_coordinates[0] - box_center_x)**2 + (ring_coordinates[1] - box_center_y)**2)**0.5
+
+        miminum_distance_value = min(index_distance_to_center,middle_distance_to_center,ring_distance_to_center)
         # Check if the distance is within the threshold
-        print(F"Distance {distance_to_center}")
-        return distance_to_center < threshold
+        print(F"Minimum Distance {miminum_distance_value}")
+        return miminum_distance_value < threshold
     except Exception as e:
         # Catch any other exceptions
         print(f"An error occurred: {e}")
