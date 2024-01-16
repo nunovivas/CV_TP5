@@ -4,6 +4,8 @@ from statistics import mean as mean
 import time
 import math
 
+import numpy as np
+
 
 # Store fps values for calculating mean
 fps_list = []
@@ -11,7 +13,16 @@ fps_list = []
 def euclidean_distance(point1, point2):
     return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
 
+def center_distance(box1, box2):
+    x1, y1, w1, h1 = box1
+    x2, y2, w2, h2 = box2
 
+    center1 = (x1 + w1 / 2, y1 + h1 / 2)
+    center2 = (x2 + w2 / 2, y2 + h2 / 2)
+
+    distance = math.sqrt((center2[0] - center1[0]) ** 2 + (center2[1] - center1[1]) ** 2)
+
+    return distance
 def doMask(frame, box, newImage):
     # Resize the image to fit the bounding box
     newImage_resized = cv2.resize(newImage, (box[2], box[3]))
@@ -40,7 +51,7 @@ def doMask(frame, box, newImage):
         # Blend the images using the alpha channel
         for c in range(0, 3):
             roi[:, :, c] = (alpha_channel * newImage_resized[:, :, c] +
-                            (1.0 - alpha_channel) * roi[:, :, c])
+                            (1 - alpha_channel) * roi[:, :, c])
 
         # Update the frame with the blended result
         frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]] = roi
@@ -96,8 +107,8 @@ def isPinch (thumb_coordinates,index_coordinates,middle_coordinates,ring_coordin
     # Calculate the average distance between fingers
     average_distance = (thumb_index_distance + thumb_middle_distance + thumb_ring_distance) / 3
   
-    print (F"Index distance:{thumb_index_distance}/middle distance:{thumb_middle_distance}/ring distance:{thumb_ring_distance}")
-    print (F"Average Distance:{average_distance}")
+    # print (F"Index distance:{thumb_index_distance}/middle distance:{thumb_middle_distance}/ring distance:{thumb_ring_distance}")
+    # print (F"Average Distance:{average_distance}")
     
     if average_distance<threshold : return True
     else : return False
@@ -131,7 +142,7 @@ def isPinchInsideBox( box,thumb_coordinates, index_coordinates, middle_coordinat
 
         miminum_distance_value = min(index_distance_to_center,middle_distance_to_center,ring_distance_to_center)
         # Check if the distance is within the threshold
-        print(F"Minimum Distance {miminum_distance_value}")
+        # print(F"Minimum Distance {miminum_distance_value}")
         return miminum_distance_value < threshold
     except Exception as e:
         # Catch any other exceptions
@@ -159,19 +170,19 @@ def changeBoxSize(difficulty) :
         case 'Easy':
             box_size = (175,175)
         case 'Medium':
-            box_size = (150,150)
+            box_size = (120,120)
         case 'Hard':
-            box_size = (125,125)
+            box_size = (80,80)
         case 'God':
-            box_size = (100,100)
+            box_size = (30,30)
         case _:
             box_size = (175,175)
     return box_size
 
-def get_right_hand_coordinates(hand_landmarks):
-    # Extract x and y coordinates of the right hand landmarks
-    right_hand_x = [hand_landmarks.landmark[i].x for i in range(9, 17)]
-    right_hand_y = [hand_landmarks.landmark[i].y for i in range(9, 17)]
+# def get_right_hand_coordinates(hand_landmarks):
+#     # Extract x and y coordinates of the right hand landmarks
+#     right_hand_x = [hand_landmarks.landmark[i].x for i in range(9, 17)]
+#     right_hand_y = [hand_landmarks.landmark[i].y for i in range(9, 17)]
 
-    return right_hand_x, right_hand_y      
+#     return right_hand_x, right_hand_y      
   

@@ -2,7 +2,6 @@ import cv2
 import os
 import time
 import functions as f
-import random
 import mediapipe as mp
 from classes import DifficultyHandler
 
@@ -12,31 +11,41 @@ def main():
     directory_path = './images/'
     congratulations_image_path = './images/congratulations.png'  # Replace with the actual path to your congratulations image
     basket_image_path = './images/basket.png'
+    game_paused_image_path = './images/pause1.png'
     #initialize some variables
     last_reset_time=0
     frame_index=0
     #Scoring and congratulations variables
     score=0
+    score_distance = 50 # pixels
     show_congratulations=False
     congratulations_display_duration = 40  # Number of loops to display the congratulations image
     congratulations_frame = cv2.imread(congratulations_image_path)
     loop_congratulations_count = 0
+    minimum_distance_for_spawn = 500
+    #basket
+    basket_image = cv2.imread(basket_image_path,cv2.IMREAD_UNCHANGED)
     
-    basket_image = cv2.imread(basket_image_path)
+    #Pause
+    game_paused=False
+    pause_frame = cv2.imread(game_paused_image_path)
+
+    #difficulty and pinch
     difficulty_handler = DifficultyHandler()
     difficulty = difficulty_handler.get_current_difficulty()
     pinchInside=False
-    durationOfPinch=1
+    durationOfPinch=0.2 # the time it takes for release when pinch is not detected
+    #pinch_threshold = 0.02 # Define a threshold for pinch detection
     #swipe variables
     left_swipe_counter = 0
     right_swipe_counter = 0
     swipe_threshold = 10 # this is actually the number of processed frames. Might need to be bigger
     last_index_x = None
     initial_index_x = None  # Record initial x-coordinate
-    # Define a threshold for pinch detection
-    pinch_threshold = 0.02
+    
     # Box size width and heigth
     bb_box_size = f.changeBoxSize(difficulty)
+    basket_box_size = f.changeBoxSize(difficulty)
     
     # Get a list of all files in the directory
     file_list = sorted(file for file in os.listdir(directory_path) if not file.startswith('.'))
@@ -63,7 +72,7 @@ def main():
 
     # Generate random starting points for the bounding box
     bb_box = f.shuffleBox(mainFrameWidth,mainFrameHeight,bb_box_size)
-    print (bb_box)
+    basket_box = f.shuffleBox(mainFrameWidth,mainFrameHeight,basket_box_size)
     # Initialize time
     start_time = time.time()
 
@@ -72,7 +81,7 @@ def main():
         current_time = time.time()
         elapsed_time = current_time - start_time
         if elapsed_time >= durationOfPinch:
-            print("At least 1 second has passed.Releasing Pinch and reseting Swipes")
+            print(F"At least {durationOfPinch} second has passed.Releasing Pinch and reseting Swipes")
             pinchInside=False
             start_time = time.time()
             initial_index_x = None
@@ -130,7 +139,13 @@ def main():
                     cv2.putText(frame, "Pinch Detected", (frame.shape[1] - 200, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
             #Just move the ball if there is an index
             if index_coordinates and pinchInside:
-                bb_box = *index_coordinates, *bb_box_size
+                #old calculation
+                #bb_box = *index_coordinates, *bb_box_size
+                # the middle of the box should be where the index is
+                #print(F"OLD index coordinates:{index_coordinates} and box size:{bb_box_size}")
+                bb_box = index_coordinates[0]-int(bb_box_size[0]/2),index_coordinates[1]-int(bb_box_size[1]/2),*bb_box_size
+                #print(F"NEW index coordinates:{index_coordinates} and box size:{bb_box_size}")
+
                 
             #CHANGE LEVEL USING SWIPES
             # Check if this is not the first frame
@@ -190,14 +205,40 @@ def main():
                 bb_box = f.shuffleBox(mainFrameWidth,mainFrameHeight,bb_box_size)
                 
         #BASKET
-        
-        
+        # Resize the image to fit inside the box
+        basket_to_display = cv2.resize(basket_image, (basket_box_size[0], basket_box_size[1]))
+        success = f.doMask(frame,basket_box,basket_to_display)
+        if success is False : # if the doMask reports invalid frame
+            #reshuffle the basketball
+            basket_box = f.shuffleBox(mainFrameWidth,mainFrameHeight,basket_box_size)
+            
+        #Check for Score
+        distance_between_centers = f.center_distance(bb_box,basket_box)
+        #print (F"Distance between centers:{distance_between_centers}")
+        if distance_between_centers< score_distance and not show_congratulations:
+            print("SCORE!")
+            #increase the score and then shuffle the box position
+            score+=1
+            show_congratulations=True
+            #keeps randomizing the spawn till the minimum distance is achieved
+            distance_between_centers=0
+            while (int(distance_between_centers)<int(minimum_distance_for_spawn)):
+                print("SPAWNING AGAIN")
+                print (F"BEFORE:Distance between centers:{distance_between_centers} minimum:{minimum_distance_for_spawn}")
+                bb_box = f.shuffleBox(mainFrameWidth,mainFrameHeight,bb_box_size)
+                distance_between_centers = f.center_distance(bb_box,basket_box)
+                print (F"AFTER:Distance between centers:{distance_between_centers} minimum:{minimum_distance_for_spawn}")
+
+
         #END FRAME PROCESSING
     
         #Display current Score and Difficulty
         f.displayScore(frame,score,difficulty)
+        # Check for Pause and or congratulations
         # Display the updated frame with the image or the congratulations in case of scoring
-        if (show_congratulations):
+        if (game_paused):
+            cv2.imshow('Main Game', pause_frame)
+        elif (show_congratulations):
             cv2.imshow('Main Game', congratulations_frame)
             loop_congratulations_count += 1
             # Reset loop count after displaying the congratulations image for the specified duration
@@ -209,12 +250,12 @@ def main():
         # Exit the loop when the 'q' key is pressed or when all images are displayed
         if cv2.waitKey(1) & 0xFF == ord('q') :
             break
+        if cv2.waitKey(1) & 0xFF == ord('p') :
+             game_paused=not game_paused
         if cv2.waitKey(1) & 0xFF == ord('s') :
             #shuffle the box position
             score+=1
             show_congratulations=True
-        if cv2.waitKey(1) & 0xFF == ord('w') :
-            #just shuffle the box position
             bb_box = f.shuffleBox(mainFrameWidth,mainFrameHeight,bb_box_size)
         if cv2.waitKey(1) & 0xFF == ord('d') :
             #change the difficulty and shuffle the box position
