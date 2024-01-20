@@ -6,10 +6,9 @@ DONE -> Release
 DONE -> Spawn do cesto, após x segundos e depois de ponto ou falha
 DONE -> Encestar – Sobreposição de elementos gráficos ou texto
 DONE -> Display Score Permanente
-GESTURE? -> Swipe Left/Right (aumenta diminui o diametro do cesto)
-Jogo entra em pausa se não for detetada uma face
+DONE GESTURE? -> Swipe Left/Right (aumenta diminui o diametro do cesto)
+DONE -> Jogo entra em pausa se não for detetada uma face
 DONE -> Confetis (ou outra imagem e se possivel animação) Quando encesta
-Pausa
 
 
 PROBLEMS:
@@ -18,4 +17,5 @@ Basket -> Needs to spawn at a distance from the borders....
 DONE - Pinch needs to center the ball on the pinch center
 SWIPE IS shit atm
 DONE -> PINCH -> the time of the pinch is a bit off . Set to 0.2secs.. seems good
+DONE -> Only works with left hand
 

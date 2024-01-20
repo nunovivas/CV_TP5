@@ -187,5 +187,39 @@ def changeBoxSize(difficulty) :
 #     right_hand_x = [hand_landmarks.landmark[i].x for i in range(9, 17)]
 #     right_hand_y = [hand_landmarks.landmark[i].y for i in range(9, 17)]
 
-#     return right_hand_x, right_hand_y      
+#     return right_hand_x, right_hand_y   
+
+def detect_thumb(frame,right_hand_landmarks):
+    # Accessing the coordinates of the right thumb tip (landmark index 4)
+    right_thumbtip = (right_hand_landmarks[4].x, right_hand_landmarks[4].y, right_hand_landmarks[4].z)
+
+    # Accessing the coordinates of the right thumb base (landmark index 0)
+    right_thumb_base = (right_hand_landmarks[0].x, right_hand_landmarks[0].y, right_hand_landmarks[0].z)
+
+    # Draw a circle on the right thumb tip
+    right_thumbtip_x = int(right_thumbtip[0] * frame.shape[1])
+    right_thumbtip_y = int(right_thumbtip[1] * frame.shape[0])
+    cv2.circle(frame, (right_thumbtip_x, right_thumbtip_y), 10, (0, 255, 0), -1)
+
+    # Draw a circle on the right thumb base
+    right_thumb_base_x = int(right_thumb_base[0] * frame.shape[1])
+    right_thumb_base_y = int(right_thumb_base[1] * frame.shape[0])
+    cv2.circle(frame, (right_thumb_base_x, right_thumb_base_y), 10, (0, 0, 255), -1)
+
+    # Check for a more precise thumbs-up gesture
+    thumb_length = right_hand_landmarks[4].x - right_hand_landmarks[0].x
+    thumb_height = right_hand_landmarks[4].y - right_hand_landmarks[0].y
+
+    # Define thresholds for thumbs-up and thumbs-down
+    thumbs_up_threshold = 0.02
+    thumbs_down_threshold = 0.02
+
+    # Determine the gesture
+    if thumb_length > thumbs_up_threshold and thumb_height < thumbs_down_threshold:
+        return "UP"
+    elif thumb_length > thumbs_down_threshold and thumb_height > thumbs_up_threshold:
+        return "DOWN"
+    else:
+        return None
+
   

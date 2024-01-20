@@ -36,7 +36,9 @@ def main():
     difficulty = difficulty_handler.get_current_difficulty()
     pinchInside=False
     durationOfPinch=0.2 # the time it takes for release when pinch is not detected
+    frame_thumb_counter=0
     #pinch_threshold = 0.02 # Define a threshold for pinch detection
+    
     #swipe variables
     left_swipe_counter = 0
     right_swipe_counter = 0
@@ -119,7 +121,7 @@ def main():
 
         if face_countdown_counter==frame_limit_without_face:
             game_paused=True
-        
+       
         #LEFT HAND
         # Check if hand landmarks are detected
         if results2.left_hand_landmarks : # can only play with the left hand for now
@@ -136,7 +138,6 @@ def main():
             
             #Holistic Code
             hand_landmarks = results2.left_hand_landmarks
-            print (hand_landmarks)
             thumb_tip = hand_landmarks.landmark[4] # Thumb Tip
             index_tip = hand_landmarks.landmark[8] # Index Tip
             middle_tip = hand_landmarks.landmark[12] # Middle Finger Tip
@@ -180,44 +181,29 @@ def main():
                 #print(F"NEW index coordinates:{index_coordinates} and box size:{bb_box_size}")
 
                 
-            #CHANGE LEVEL USING SWIPES
-            # Check if this is not the first frame
-            if last_index_x is not None and pinchInside==False:
-                # Record initial x-coordinate when the swipe starts
-                if initial_index_x is None:
-                    initial_index_x = index_tip.x
-                    
-                # Compare the current and last known index finger positions
-                if index_tip.x < last_index_x:
-                    left_swipe_counter += 1
-                    right_swipe_counter = 0
-                elif index_tip.x > last_index_x:
-                    right_swipe_counter += 1
-                    left_swipe_counter = 0
-                    
-                #calculate the pixels travelled
-                percentage_travelled = abs(initial_index_x - index_tip.x)
+            
+        #RIGHT HAND
+        #CHANGE LEVEL USING Thumbs
+        # Check if this is not the first frame
+        # Only works once each 60 frames
+        if results2.right_hand_landmarks:
+            if pinchInside==False and  frame_thumb_counter<=0:
+                 #RIGHT HAND (for difficulty)
+                #if results2.right_hand_landmarks:
+                right_hand_landmarks = results2.right_hand_landmarks.landmark
 
-                # Check for a left swipe
-                if left_swipe_counter >= swipe_threshold and percentage_travelled>0.35:
-                    print(F"Swipe Left detected! Looping Difficulty. % travelled{percentage_travelled}")
-                    difficulty = difficulty_handler.loop_difficulty()
+                thumb_detection = f.detect_thumb(frame, right_hand_landmarks)
+                
+                if (thumb_detection== "UP"):
+                    difficulty=difficulty_handler.increase_difficulty()
                     bb_box_size = f.changeBoxSize(difficulty)
                     bb_box = f.shuffleBox(mainFrameWidth,mainFrameHeight,bb_box_size)
-                    left_swipe_counter = 0  # Reset the counter after detecting a left swipe
-                    initial_index_x = None
-                # Check for a right swipe
-                if right_swipe_counter >= swipe_threshold and percentage_travelled>0.35:
-                    print(F"Swipe Right detected! Looping Difficulty. % travelled{percentage_travelled}")
-                    difficulty = difficulty_handler.loop_difficulty()
+                    frame_thumb_counter=60
+                elif (thumb_detection=="DOWN"):
+                    difficulty= difficulty_handler.decrease_difficulty()
                     bb_box_size = f.changeBoxSize(difficulty)
                     bb_box = f.shuffleBox(mainFrameWidth,mainFrameHeight,bb_box_size)
-                    right_swipe_counter = 0  # Reset the counter after detecting a right swipe
-                    initial_index_x = None
-
-            # Update the last known index finger position
-            last_index_x = index_tip.x
-
+                    frame_thumb_counter=60
 
         #BASKETBALL
         # Display the corresponding image from the list inside the box
@@ -262,6 +248,9 @@ def main():
                 distance_between_centers = f.center_distance(bb_box,basket_box)
                 print (F"AFTER:Distance between centers:{distance_between_centers} minimum:{minimum_distance_for_spawn}")
 
+        #PROCESS Thumbs counter
+        frame_thumb_counter-=1
+        print(frame_thumb_counter)
 
         #END FRAME PROCESSING
     
