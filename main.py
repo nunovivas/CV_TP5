@@ -29,7 +29,8 @@ def main():
     #Pause
     game_paused=False
     pause_frame = cv2.imread(game_paused_image_path)
-
+    face_countdown_counter=0
+    frame_limit_without_face=40 # 40 consecutive frames without face
     #difficulty and pinch
     difficulty_handler = DifficultyHandler()
     difficulty = difficulty_handler.get_current_difficulty()
@@ -61,8 +62,14 @@ def main():
 
     # Initialize MediaPipe Hands
     mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands()
+    hands = mp_hands.Hands(min_tracking_confidence = 0.7) # needs parameters
 
+    # Initialize Mediapipe Holistic
+    mp_holistic = mp.solutions.holistic
+    holistic = mp_holistic.Holistic(min_tracking_confidence=0.7)
+    # Initialize MediaPipe Drawing
+    mp_drawing = mp.solutions.drawing_utils
+    
     # Open the video capture
     cap = cv2.VideoCapture(1)  # Use 0 for the default camera, change if needed
 
@@ -98,17 +105,43 @@ def main():
         # Convert the BGR image to RGB
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # Process the image with MediaPipe Hands
-        results = hands.process(rgb_frame)
+        # Process the image with MediaPipe Hands and holistic
+        #results = hands.process(rgb_frame)
+        results2 = holistic.process(rgb_frame)
+        
+        # FACE
+        if results2.face_landmarks:
+            mp_drawing.draw_landmarks(frame, results2.face_landmarks)
+            face_countdown_counter=0
+            game_paused=False
+        else:
+            face_countdown_counter+=1
 
+        if face_countdown_counter==frame_limit_without_face:
+            game_paused=True
+        
+        #LEFT HAND
         # Check if hand landmarks are detected
-        if results.multi_hand_landmarks:
+        if results2.left_hand_landmarks : # can only play with the left hand for now
+        #if results.multi_hand_landmarks:
+            # TODO: NOTE TO FUTURE NUNO -> right_hand_landmarks.landmark
             # Extract landmarks for the first detected hand
-            hand_landmarks = results.multi_hand_landmarks[0]
-            thumb_tip = hand_landmarks.landmark[4]  # Thumb tip
-            index_tip = hand_landmarks.landmark[8]  # Index finger tip
-            middle_tip = hand_landmarks.landmark[12] # middle finger tip
+            
+            # Hands Code
+            # hand_landmarks = results.multi_hand_landmarks[0]
+            # thumb_tip = hand_landmarks.landmark[4]  # Thumb tip
+            # index_tip = hand_landmarks.landmark[8]  # Index finger tip
+            # middle_tip = hand_landmarks.landmark[12] # middle finger tip
+            # ring_tip = hand_landmarks.landmark[16] # ring finger tip
+            
+            #Holistic Code
+            hand_landmarks = results2.left_hand_landmarks
+            print (hand_landmarks)
+            thumb_tip = hand_landmarks.landmark[4] # Thumb Tip
+            index_tip = hand_landmarks.landmark[8] # Index Tip
+            middle_tip = hand_landmarks.landmark[12] # Middle Finger Tip
             ring_tip = hand_landmarks.landmark[16] # ring finger tip
+            
              # Get the coordinates of thumb and index finger tips
             thumb_coordinates = (int(thumb_tip.x * frame.shape[1]), int(thumb_tip.y * frame.shape[0]))
             index_coordinates = (int(index_tip.x * frame.shape[1]), int(index_tip.y * frame.shape[0]))

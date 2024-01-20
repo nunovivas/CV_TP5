@@ -59,7 +59,9 @@ def doMask(frame, box, newImage):
     else:
         print("Invalid box size")
         return False
-
+#delete this
+#et, mask = cv.threshold(img2gray[3], 10, 255, cv.THRESH_BINARY)
+#source = https://docs.opencv.org/3.4/d0/d86/tutorial_py_image_arithmetics.html
 
 def has_alpha_opencv(img):
     #print (img.shape[-1])
@@ -98,7 +100,7 @@ def shuffleBox(mainFrameWidth,mainFrameHeight,box_size):
     bbox = (box_x,box_y,box_size[0], box_size[1])
     return bbox
 
-def isPinch (thumb_coordinates,index_coordinates,middle_coordinates,ring_coordinates,threshold=100):
+def isPinch (thumb_coordinates,index_coordinates,middle_coordinates,ring_coordinates,threshold=50):
      # Calculate distances between finger points
     thumb_index_distance = euclidean_distance(thumb_coordinates, index_coordinates)
     thumb_middle_distance = euclidean_distance(thumb_coordinates, middle_coordinates)
@@ -165,6 +167,7 @@ def displayScore(frame, score, difficulty):
     cv2.putText(frame, text, text_position, font, font_scale, (255, 255, 255), font_thickness, cv2.LINE_AA)
 
     return frame
+
 def changeBoxSize(difficulty) :
     match difficulty:
         case 'Easy':
