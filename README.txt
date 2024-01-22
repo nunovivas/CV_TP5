@@ -18,4 +18,3 @@ DONE - Pinch needs to center the ball on the pinch center
 SWIPE IS shit atm
 DONE -> PINCH -> the time of the pinch is a bit off . Set to 0.2secs.. seems good
 DONE -> Only works with left hand
-

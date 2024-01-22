@@ -39,12 +39,12 @@ def main():
     frame_thumb_counter=0
     #pinch_threshold = 0.02 # Define a threshold for pinch detection
     
-    #swipe variables
-    left_swipe_counter = 0
-    right_swipe_counter = 0
-    swipe_threshold = 10 # this is actually the number of processed frames. Might need to be bigger
-    last_index_x = None
-    initial_index_x = None  # Record initial x-coordinate
+    # #swipe variables
+    # left_swipe_counter = 0
+    # right_swipe_counter = 0
+    # swipe_threshold = 10 # this is actually the number of processed frames. Might need to be bigger
+    # last_index_x = None
+    # initial_index_x = None  # Record initial x-coordinate
     
     # Box size width and heigth
     bb_box_size = f.changeBoxSize(difficulty)
@@ -63,12 +63,12 @@ def main():
         framesWithBasketball.append(frame)
 
     # Initialize MediaPipe Hands
-    mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands(min_tracking_confidence = 0.7) # needs parameters
+    #mp_hands = mp.solutions.hands
+    #hands = mp_hands.Hands(min_tracking_confidence = 0.7) # needs parameters
 
     # Initialize Mediapipe Holistic
     mp_holistic = mp.solutions.holistic
-    holistic = mp_holistic.Holistic(min_tracking_confidence=0.7)
+    holistic = mp_holistic.Holistic(min_tracking_confidence=0.5, model_complexity=1)
     # Initialize MediaPipe Drawing
     mp_drawing = mp.solutions.drawing_utils
     
@@ -90,10 +90,9 @@ def main():
         current_time = time.time()
         elapsed_time = current_time - start_time
         if elapsed_time >= durationOfPinch:
-            print(F"At least {durationOfPinch} second has passed.Releasing Pinch and reseting Swipes")
+            print(F"At least {durationOfPinch} second has passed.Releasing Pinch")
             pinchInside=False
             start_time = time.time()
-            initial_index_x = None
 
         # Read a frame from the camera
         ret, frame = cap.read()
