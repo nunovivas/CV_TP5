@@ -34,9 +34,16 @@ def doMask(frame, box, newImage):
         # instead create it where the box is
         roi = frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]]
         
+        #Not needed
         # Now create a mask of logo and create its inverse mask also
-        img2gray = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
-        ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
+        #img2gray = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
+        # old mask from 10 to 255
+        #ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
+        #new mask 
+        # Threshold the alpha channel to create a binary mask
+        alpha_channel = img2[:, :, 3]
+        ret, mask = cv2.threshold(alpha_channel, 10, 255, cv2.THRESH_BINARY)
+
         mask_inv = cv2.bitwise_not(mask)
         # Now black-out the area of logo in ROI
         # Check for empty images or masks
@@ -53,7 +60,9 @@ def doMask(frame, box, newImage):
             print(roi.dtype, mask_inv.dtype, img2.dtype,mask.dtype)
             print(roi.shape, mask_inv.shape, img2.shape,mask.shape)
 
+            # o problema está aqui
             img1_bg = cv2.bitwise_and(roi,roi,mask = mask_inv)
+
         # Take only region of logo from logo image.
         img2_fg = cv2.bitwise_and(img2,img2,mask = mask)
         # Put logo in ROI and modify the main image
