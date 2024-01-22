@@ -114,9 +114,11 @@ def doMaskOld(frame, box, newImage):
         # Update the frame with the blended result
         frame[box[1]:box[1] + box[3], box[0]:box[0] + box[2]] = roi
         return True
+    
     else:
         print("Invalid box size")
         return False
+    
 #delete this
 #et, mask = cv.threshold(img2gray[3], 10, 255, cv.THRESH_BINARY)
 #source = https://docs.opencv.org/3.4/d0/d86/tutorial_py_image_arithmetics.html
